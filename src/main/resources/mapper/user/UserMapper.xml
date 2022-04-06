@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="space.jiawei.library.module.user.UserDao">
+
+    <resultMap id="UserDTO" type="space.jiawei.library.module.user.domain.dto.UserDTO"></resultMap>
+
+    <resultMap id="UserVO" type="space.jiawei.library.module.user.domain.vo.UserVO"></resultMap>
+
+    <sql id="baseSql">
+        e.id,
+        e.login_name,
+        e.login_pwd,
+        e.actual_name,
+        e.nick_name,
+        e.phone,
+        e.id_card,
+        e.birthday,
+        e.email,
+        e.is_disabled,
+        e.remark,
+        e.is_delete,
+        e.is_admin,
+        e.update_time,
+        e.create_time
+    </sql>
+
+    <select id="selectUserList" resultMap="UserDTO">
+        SELECT
+        <include refid="baseSql"></include>
+        FROM li_user e
+        <where>
+            <if test="queryDTO.phone != null and queryDTO.phone != ''">
+                <bind name="likephone" value=" '%' + queryDTO.phone +'%' "></bind>
+                AND e.phone like #{likephone}
+            </if>
+            <if test="queryDTO.actualName != null and queryDTO.actualName != ''">
+                <bind name="likeActualName" value=" '%' + queryDTO.actualName +'%' "></bind>
+                AND e.actual_name like #{likeActualName}
+            </if>
+            <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
+                <bind name="likeName" value=" '%' + queryDTO.keyword +'%' "></bind>
+                AND (e.actual_name like #{likeName} or e.nick_name like #{likeName} or e.phone like #{likeName})
+            </if>
+            <if test="queryDTO.isDisabled != null">
+                AND e.is_disabled = #{queryDTO.isDisabled}
+            </if>
+            <if test="queryDTO.isDelete != null">
+                AND e.is_delete = #{queryDTO.isDelete}
+            </if>
+            <if test="queryDTO.userIds != null and queryDTO.userIds.size > 0">
+                AND e.id IN
+                <foreach collection="queryDTO.userIds" open="(" close= ")" item="item" separator=","  >
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by e.create_time desc
+    </select>
+
+    <update id="batchUpdateDisabledStatus">
+        UPDATE li_user e
+        set e.is_disabled = #{isDisabled}
+        WHERE id in
+        <foreach collection="userIds" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <select id="login" resultMap="UserDTO">
+        SELECT
+        <include refid="baseSql"></include>
+        FROM
+        li_user e
+        WHERE
+        e.login_name = #{loginName} and e.login_pwd = #{loginPwd}
+    </select>
+
+    <select id="getByLoginName" resultMap="UserDTO">
+        SELECT
+        <include refid="baseSql"></include>
+        FROM
+        li_user e
+        WHERE
+        e.login_name = #{loginName} and e.is_disabled = #{isDisabled}
+    </select>
+
+    <select id="getByPhone" resultMap="UserDTO">
+        SELECT
+        <include refid="baseSql"></include>
+        FROM
+        li_user e
+        WHERE
+        e.phone = #{phone} and e.is_disabled = #{isDisabled}
+    </select>
+
+    <select id="listAll" resultMap="UserDTO">
+        SELECT
+        <include refid="baseSql"></include>
+        FROM
+        li_user e
+        order by e.create_time desc
+    </select>
+    
+    <select id="getByIds" resultMap="UserDTO">
+        SELECT 
+        <include refid="baseSql"></include>
+        FROM
+        li_user e
+        <if test="ids != null and ids.size > 0">
+            AND e.id IN
+            <foreach collection="ids" open="(" close= ")" item="item" separator=","  >
+                #{item}
+            </foreach>
+        </if>
+        order by e.create_time desc
+    </select>
+
+    <select id="getById" resultMap="UserDTO">
+        SELECT
+        <include refid="baseSql"></include>
+        FROM li_user e
+        WHERE e.id = #{id}
+    </select>
+
+    <update id="updatePassword">
+        UPDATE  li_User
+        SET login_pwd = #{password}
+        WHERE id = #{userId}
+    </update>
+
+</mapper>
